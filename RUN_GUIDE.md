@@ -88,10 +88,12 @@ In Docker Desktop you will see a **vaultwise** project with three containers:
 | Stop it | `docker compose down` |
 | Start it again | `docker compose up -d` |
 | See the app's log | `docker compose logs app` |
-| Delete everything, including stored documents and models | `docker compose down -v` |
+| Delete Docker's index and models (your documents stay) | `docker compose down -v` |
 
-The Docker copy keeps its documents in the Docker volume `vaultwise-data`, separate from the `run.bat` copy, so
-documents added in one do not appear in the other. In Docker, summaries use the 3B model.
+Both copies use the **same documents**: the Docker copy reads and writes the vault folder `run.bat` uses
+(`C:\Users\<you>\.vaultwise\uploads`, outside OneDrive), so a document added in one appears in the other. The
+Docker copy keeps its own search index and logs in the Docker volume `vaultwise-data`. In Docker, summaries use the
+3B model.
 
 ---
 

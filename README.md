@@ -128,9 +128,10 @@ This starts three containers in a `vaultwise` project, visible in Docker Desktop
 | `vaultwise-ollama` | the local AI engine; no port is published, so only the app can reach it |
 | `vaultwise-models` | downloads the AI models the first time (~2.3 GB), then exits |
 
-Documents, the index and logs are kept in the Docker volume `vaultwise-data`, inside Docker's own storage and
-never in the project folder. Stop with `docker compose down`; add `-v` to also delete the stored documents and
-models. In Docker, summaries use the 3B model to keep the download small.
+The Docker copy uses the same document vault as `run.bat` (`~/.vaultwise/uploads`, outside OneDrive, mounted
+into the container), so both show the same documents. Its search index and logs stay in the Docker volume
+`vaultwise-data`. Stop with `docker compose down`; add `-v` to also delete Docker's index and models (your documents
+stay in the vault folder). In Docker, summaries use the 3B model to keep the download small.
 
 **Manual / macOS / Linux.** Prerequisites: Python 3.10+, [Ollama](https://ollama.com/download).
 

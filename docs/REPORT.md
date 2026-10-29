@@ -366,8 +366,9 @@ the source:
 - **Packaging, two single-command options:** `run.bat` (installs what is missing and starts the app directly), or
   Docker, `docker compose up -d`, which starts three containers: `vaultwise-app` (the web app, published on
   127.0.0.1:8080 only), `vaultwise-ollama` (the AI engine, with no published port, so only the app can reach it) and
-  `vaultwise-models` (a one-off that downloads the models, then exits). Documents live in the Docker volume
-  `vaultwise-data`, never in the synced project folder. The app container runs as a non-root user and has a
+  `vaultwise-models` (a one-off that downloads the models, then exits). Documents live in the same vault folder as
+  `run.bat` (`~/.vaultwise/uploads`, mounted into the container, never in the synced project folder). The app
+  container runs as a non-root user and has a
   health check. Uploads and deletions can be protected with `VAULTWISE_ADMIN_KEY`.
 - **Private documents (contracts, policies shared with the employee, confidential files):** the UI section
   *Your private documents* accepts PDF, DOCX, TXT or MD files (or pasted text) with a category. Clause headings

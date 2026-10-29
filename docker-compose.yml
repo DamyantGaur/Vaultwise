@@ -43,7 +43,9 @@ services:
       VAULTWISE_SUMMARY_MODEL: llama3.2:3b
       # VAULTWISE_ADMIN_KEY: change-me      # uncomment to require a password for uploads and deletions
     volumes:
-      - vaultwise-data:/data                # your documents, index and logs (stays inside Docker)
+      - vaultwise-data:/data                # search index and logs (stay inside Docker)
+      # your documents: the same vault folder run.bat uses (outside OneDrive), so both copies show the same files
+      - ${USERPROFILE:-${HOME}}/.vaultwise/uploads:/data/uploads
     restart: unless-stopped
 
 volumes:
