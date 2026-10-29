@@ -1,0 +1,23 @@
+# docker compose up -d
+# docker compose exec ollama ollama pull llama3.2:3b
+# docker compose exec ollama ollama pull llama3.1:8b
+# docker compose exec ollama ollama pull nomic-embed-text
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes: ["ollama:/root/.ollama"]
+    # no published port: only the vaultwise container can reach the model server
+  vaultwise:
+    build: .
+    depends_on: [ollama]
+    ports: ["127.0.0.1:8000:8000"]          # reachable from this computer only
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      VAULTWISE_ADMIN_KEY: change-me
+      VAULTWISE_DATA_DIR: /private        # uploads, index and logs
+    volumes:
+      - ./data/corpus:/app/data/corpus      # company policy files; then POST /admin/reindex
+      - private:/private                    # Docker volume, not a folder inside the (cloud-synced) project
+volumes:
+  ollama:
+  private:

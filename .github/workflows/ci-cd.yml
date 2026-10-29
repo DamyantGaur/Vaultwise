@@ -1,0 +1,117 @@
+# Vaultwise CI/CD
+#  1. test     - lint, 39 unit/API tests, and the AI quality gate (re-scores stored evaluation outputs)
+#  2. build    - builds both Docker images; runs the cloud image with the real model and asks it a question
+#  3. deploy   - on main only: pushes the cloud image's source to the Hugging Face Space
+#  4. verify   - waits for the Space to build, then smoke-tests the live URL
+# Setup (once): repository secret HF_TOKEN (write token), repository variable HF_SPACE ("user/space"),
+# optional secret VAULTWISE_ADMIN_KEY. See DEPLOYMENT.md.
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint, tests and quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt ruff==0.8.4
+      - name: Lint (ruff)
+        run: ruff check .
+      - name: Unit and API tests
+        run: python -m pytest -q
+      - name: Re-score stored evaluation outputs with the current code
+        run: |
+          python eval/report.py > /dev/null
+          python eval/run_private_eval.py report > /dev/null
+      - name: AI quality gate
+        run: python eval/quality_gate.py
+
+  build:
+    name: Docker build and end-to-end test
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Free disk space (the Ollama base image is several GB)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          docker system prune -af > /dev/null
+          df -h / | tail -1
+      - name: Build the local/server image
+        run: docker build -t vaultwise:server -f Dockerfile .
+      - name: Assemble the cloud bundle
+        run: python deploy/hf_deploy.py bundle build/space
+      - name: Build the cloud image (app + Ollama + models)
+        run: docker build -t vaultwise:cloud build/space
+      - name: Run the cloud image
+        run: docker run -d --name vaultwise -p 7860:7860 vaultwise:cloud
+      - name: End-to-end smoke test with the real model
+        run: python deploy/hf_deploy.py smoke http://localhost:7860
+      - name: Container logs
+        if: always()
+        run: docker logs vaultwise 2>&1 | tail -n 80 || true
+
+  deploy:
+    name: Deploy to Hugging Face Spaces
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: production
+      url: ${{ steps.url.outputs.url }}
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_SPACE: ${{ vars.HF_SPACE }}
+      VAULTWISE_ADMIN_KEY: ${{ secrets.VAULTWISE_ADMIN_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check deployment settings
+        id: cfg
+        run: |
+          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE" ]; then
+            echo "HF_TOKEN or HF_SPACE not set: skipping deployment (see DEPLOYMENT.md)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Live URL
+        id: url
+        run: |
+          echo "url=https://$(echo "$HF_SPACE" | tr '/_.' '---' | tr '[:upper:]' '[:lower:]').hf.space" >> "$GITHUB_OUTPUT"
+      - name: Install deploy tool
+        if: steps.cfg.outputs.enabled == 'true'
+        run: pip install "huggingface_hub>=0.25"
+      - name: Upload to the Space
+        if: steps.cfg.outputs.enabled == 'true'
+        run: |
+          python deploy/hf_deploy.py bundle build/space
+          python deploy/hf_deploy.py deploy build/space
+      - name: Wait for the Space and smoke-test the live app
+        if: steps.cfg.outputs.enabled == 'true'
+        run: python deploy/hf_deploy.py wait

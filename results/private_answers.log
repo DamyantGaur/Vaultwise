@@ -1,0 +1,5 @@
+Building index: 21 documents -> 149 chunks; embedding 149 new chunks with nomic-embed-text ...
+Index 6c6d03491b28bce1 saved to C:\Users\91830\.vaultwise\index\eval_private\index
+[no_search] 0 done, 38 to run
+[vanilla_rag] 0 done, 38 to run
+[vaultwise] 0 done, 38 to run

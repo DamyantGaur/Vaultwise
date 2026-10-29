@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vaultwise"
+version = "1.0.0"
+description = "Grounded RAG assistant for enterprise policy and helpdesk questions, running on local LLMs"
+requires-python = ">=3.10"
+dependencies = ["fastapi>=0.110", "uvicorn>=0.29", "pydantic>=2.5", "requests>=2.31", "numpy>=1.26",
+                "rank-bm25==0.2.2", "PyYAML>=6.0", "scipy>=1.11", "matplotlib>=3.8",
+                "python-multipart>=0.0.9", "pypdf>=4.0", "python-docx>=1.1"]
+
+[project.scripts]
+vaultwise = "vaultwise.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+vaultwise = ["static/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 135
+target-version = "py310"
+extend-exclude = ["build"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E741"]  # `l` as a loop variable in short comprehensions

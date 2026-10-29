@@ -1,0 +1,41 @@
+{
+  "n": 60,
+  "agreement": 0.9833333333333333,
+  "cohen_kappa": 0.9565217391304347,
+  "scorer_false_positive": 1,
+  "scorer_false_negative": 0,
+  "both_correct": 44,
+  "both_wrong": 15,
+  "by_system": {
+    "llm_only__llama3.2-3b": {
+      "n": 15,
+      "auto_acc": 0.2,
+      "human_acc": 0.2
+    },
+    "rag_bm25__llama3.2-3b": {
+      "n": 15,
+      "auto_acc": 0.8,
+      "human_acc": 0.8
+    },
+    "rag_dense__llama3.2-3b": {
+      "n": 15,
+      "auto_acc": 1.0,
+      "human_acc": 1.0
+    },
+    "rag_hybrid__llama3.2-3b": {
+      "n": 15,
+      "auto_acc": 1.0,
+      "human_acc": 0.9333333333333333
+    }
+  },
+  "disagreements": [
+    {
+      "system": "rag_hybrid",
+      "model": "llama3.2-3b",
+      "id": "p11",
+      "auto_correct": "1",
+      "human_correct": "0",
+      "note": "correct facts, then contradicts itself with an off-topic remark and a refusal sentence"
+    }
+  ]
+}

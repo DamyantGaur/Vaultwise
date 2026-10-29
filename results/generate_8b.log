@@ -1,0 +1,19 @@
+Loaded index b3b723c2330654a7: 116 chunks from 18 documents
+[rag_hybrid | llama3.1:8b] 0 done, 76 to run
+  10/76  (20.5s/question)
+  20/76  (19.8s/question)
+  30/76  (19.2s/question)
+  40/76  (19.7s/question)
+  50/76  (19.5s/question)
+  60/76  (20.0s/question)
+  70/76  (18.9s/question)
+  76/76  (18.4s/question)
+[llm_only | llama3.1:8b] 0 done, 76 to run
+  10/76  (12.3s/question)
+  20/76  (11.6s/question)
+  30/76  (11.4s/question)
+  40/76  (11.5s/question)
+  50/76  (11.5s/question)
+  60/76  (11.5s/question)
+  70/76  (11.7s/question)
+  76/76  (11.8s/question)

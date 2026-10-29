@@ -1,0 +1,57 @@
+{
+  "updated_utc": "2026-10-28T17:26:00.102984+00:00",
+  "python": "3.12.1",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "config": {
+    "corpus_dir": "C:\\Users\\91830\\OneDrive\\Desktop\\IDT FINAL PROJECT\\data\\corpus",
+    "private_dir": "C:\\Users\\91830\\.vaultwise",
+    "upload_dir": null,
+    "index_dir": "C:\\Users\\91830\\.vaultwise\\index\\eval",
+    "log_dir": "C:\\Users\\91830\\.vaultwise\\logs",
+    "privacy": {
+      "allow_remote_llm": false,
+      "log_private_text": false
+    },
+    "ollama": {
+      "base_url": "http://localhost:11434",
+      "timeout_s": 300
+    },
+    "chunking": {
+      "strategy": "section",
+      "chunk_size_words": 120,
+      "overlap_words": 30
+    },
+    "embedding": {
+      "model": "nomic-embed-text",
+      "query_prefix": "search_query: ",
+      "document_prefix": "search_document: ",
+      "batch_size": 32
+    },
+    "retrieval": {
+      "top_k": 4,
+      "candidate_pool": 20,
+      "rrf_k": 60,
+      "default_mode": "hybrid"
+    },
+    "generation": {
+      "model": "llama3.2:3b",
+      "temperature": 0.0,
+      "seed": 42,
+      "num_ctx": 4096,
+      "max_tokens": 300,
+      "summary_model": "llama3.1:8b",
+      "summary_max_tokens": 600,
+      "summary_batch_words": 1500
+    },
+    "refusal_message": "I don't have enough information in the company documents to answer that."
+  },
+  "ollama_model_digests": {
+    "llama3.2:3b": "a80c4f17acd55265feec403c7aef86be0c25983ab279d83f3bcd3abbcb5b8b72",
+    "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "codellama:7b-instruct": "8fdf8f752f6e80de33e82f381aba784c025982752cd1ae9377add66449d2225f",
+    "qwen2.5-coder:7b": "dae161e27b0e90dd1856c8bb3209201fd6736d8eb66298e75ed87571486f4364",
+    "tinyllama:latest": "2644915ede352ea7bdfaff0bfac0be74c719d5d5202acb63a6fb095b52f394a4",
+    "llama3.1:8b": "46e0c10c039e019119339687c3c1757cc81b9da49709a3b3924863ba87ca666e"
+  },
+  "n_questions": 76
+}

@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vaultwise</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234338ca'/%3E%3Ccircle cx='16' cy='15' r='6' fill='none' stroke='white' stroke-width='2.4'/%3E%3Cpath d='M16 15v8' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  /* No external fonts, scripts or images: the page works fully offline and makes no third-party requests. */
+  :root {
+    --bg:#f4f6fb; --surface:#ffffff; --surface-2:#f8f9fc; --ink:#0f172a; --ink-2:#475569; --ink-3:#64748b;
+    --line:#e2e8f0; --line-2:#cbd5e1; --brand:#4338ca; --brand-ink:#ffffff; --brand-soft:#eef2ff; --brand-line:#c7d2fe;
+    --ok:#047857; --ok-soft:#ecfdf5; --warn:#b45309; --warn-soft:#fffbeb; --bad:#b91c1c; --bad-soft:#fef2f2;
+    --mark:#fde68a; --shadow:0 1px 2px rgba(15,23,42,.06), 0 4px 16px rgba(15,23,42,.06); --radius:12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0b1020; --surface:#121a2e; --surface-2:#0f1628; --ink:#e5e9f2; --ink-2:#a8b3c7; --ink-3:#8592a8;
+      --line:#223050; --line-2:#2e3f63; --brand:#818cf8; --brand-ink:#0b1020; --brand-soft:#1b2246; --brand-line:#3b4785;
+      --ok:#34d399; --ok-soft:#0c2a22; --warn:#fbbf24; --warn-soft:#2a210b; --bad:#f87171; --bad-soft:#2c1215;
+      --mark:#854d0e; --shadow:0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; background:var(--bg); color:var(--ink); }
+  body { font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+  /* ---------- top bar ---------- */
+  .topbar { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--surface) 88%, transparent);
+            backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  .topbar-in { max-width: 1240px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 14px; }
+  .brand { display:flex; align-items:center; gap:10px; min-width: 0; }
+  .brand-name { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  .brand-tag { color: var(--ink-3); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .spacer { flex: 1; }
+  .badge { display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:999px; font-size:13px; font-weight:600;
+           border:1px solid var(--line); background: var(--surface-2); white-space: nowrap; cursor: default; }
+  .badge .dot { width:8px; height:8px; border-radius:50%; background: var(--ink-3); }
+  .badge.ok { color: var(--ok); background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
+  .badge.ok .dot { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
+  .badge.warn { color: var(--warn); background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+  .badge.warn .dot { background: var(--warn); }
+  .cloud-banner { max-width: 1240px; margin: 16px auto 0; padding: 10px 16px; border-radius: 10px; font-size: 14px;
+                  color: var(--warn); background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); }
+  .cloud-banner[hidden] { display: none; }
+  @media (max-width: 1272px) { .cloud-banner { margin: 16px 16px 0; } }
+  .badge.bad { color: var(--bad); background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
+  .badge.bad .dot { background: var(--bad); }
+
+  /* ---------- layout ---------- */
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 20px;
+          grid-template-columns: minmax(300px, 370px) minmax(0, 1fr); align-items: start; }
+  .wrap > * { min-width: 0; }
+  @media (max-width: 920px) { .wrap { grid-template-columns: minmax(0, 1fr); } .brand-tag { display:none; } }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .panel-h { padding: 16px 18px 0; display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+  .panel-h h2 { margin:0; font-size: 15px; font-weight: 650; letter-spacing: -0.005em; }
+  .panel-b { padding: 14px 18px 18px; }
+  .muted { color: var(--ink-3); font-size: 13px; }
+  .count { font-size: 12px; color: var(--ink-3); background: var(--surface-2); border:1px solid var(--line); padding: 1px 8px; border-radius: 999px; }
+  aside.panel { position: sticky; top: 76px; }
+  @media (max-width: 920px) { aside.panel { position: static; } }
+
+  /* ---------- form controls ---------- */
+  label.field { display:block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin: 12px 0 6px; letter-spacing: .01em; }
+  input[type=text], select, textarea { width: 100%; border:1px solid var(--line-2); background: var(--surface); border-radius: 9px;
+            padding: 9px 12px; transition: border-color .15s, box-shadow .15s; }
+  input[type=text]:focus, select:focus, textarea:focus { outline: none; border-color: var(--brand);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent); }
+  textarea { resize: vertical; }
+  .row { display:grid; gap:10px; align-items:end; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) auto; }
+  .row > * { min-width: 0; }
+  @media (max-width: 640px) { .row { grid-template-columns: minmax(0, 1fr); } .row .btn { width: 100%; } }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border-radius: 9px; padding: 9px 16px; font-weight: 600;
+         border: 1px solid var(--line-2); background: var(--surface); cursor: pointer; transition: background .15s, border-color .15s; white-space: nowrap; }
+  .btn:hover { background: var(--surface-2); }
+  .btn.primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.ghost { border-color: transparent; background: transparent; padding: 5px 9px; font-weight: 550; font-size: 13px; color: var(--ink-2); }
+  .btn.ghost:hover { background: var(--surface-2); color: var(--ink); }
+  .btn.ghost.danger:hover { color: var(--bad); background: var(--bad-soft); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .btn.block { width: 100%; margin-top: 14px; }
+
+  /* ---------- upload ---------- */
+  .drop { margin-top: 12px; border: 1.5px dashed var(--line-2); border-radius: 10px; padding: 18px 14px; text-align:center; cursor:pointer;
+          background: var(--surface-2); transition: border-color .15s, background .15s; }
+  .drop:hover, .drop.over { border-color: var(--brand); background: var(--brand-soft); }
+  .drop strong { display:block; font-size: 14px; }
+  .drop .muted { display:block; margin-top: 2px; }
+  .drop .file { margin-top: 8px; font-size: 13px; font-weight: 600; color: var(--brand); overflow-wrap:anywhere; }
+  details.paste { margin-top: 10px; }
+  details.paste summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+  details.paste textarea { margin-top: 8px; min-height: 90px; }
+  .status { font-size: 13px; margin-top: 10px; min-height: 1em; }
+  .status.ok { color: var(--ok); } .status.err { color: var(--bad); }
+
+  /* ---------- document list ---------- */
+  .docs { list-style: none; margin: 16px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .doc { display:grid; grid-template-columns: 34px minmax(0,1fr); gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .doc-ico { width: 34px; height: 34px; border-radius: 8px; display:grid; place-items:center; background: var(--brand-soft); color: var(--brand); }
+  .doc-title { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+  .doc-meta { font-size: 12px; color: var(--ink-3); }
+  .doc-acts { display:flex; gap: 2px; margin: 4px 0 0 -9px; flex-wrap: wrap; }
+  .empty { text-align:center; padding: 22px 8px 6px; color: var(--ink-3); font-size: 13px; }
+
+  /* ---------- ask ---------- */
+  .ask-q { min-height: 92px; font-size: 16px; padding: 12px 14px; }
+  .hint-box { margin-top: 8px; font-size: 13px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line);
+              border-radius: 9px; padding: 8px 12px; }
+  .hint-box b { color: var(--ink); }
+  .chips { display:flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .chip { border: 1px solid var(--line); background: var(--surface-2); border-radius: 999px; padding: 5px 12px; font-size: 13px; cursor: pointer; color: var(--ink-2); text-align: left; }
+  .chip:hover { border-color: var(--brand-line); color: var(--ink); background: var(--brand-soft); }
+  .kbd { font-size: 12px; color: var(--ink-3); }
+  @media (max-width: 640px) { .kbd { display: none; } }
+
+  /* ---------- result ---------- */
+  .result { margin-top: 20px; }
+  .res-h { display:flex; align-items:center; gap: 10px; flex-wrap: wrap; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .pill { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; letter-spacing: .02em; text-transform: uppercase; }
+  .pill.answer { background: var(--brand-soft); color: var(--brand); }
+  .pill.summary { background: var(--ok-soft); color: var(--ok); }
+  .pill.none { background: var(--warn-soft); color: var(--warn); }
+  .res-q { font-weight: 600; overflow-wrap:anywhere; }
+  .res-b { padding: 16px 18px; font-size: 15px; }
+  .res-b p { margin: 0 0 10px; } .res-b ul { margin: 4px 0 12px; padding-left: 20px; } .res-b li { margin: 3px 0; }
+  .res-b h4 { margin: 14px 0 6px; font-size: 14px; } .res-b h4:first-child { margin-top: 0; }
+  .note { margin: 0 18px 14px; font-size: 13px; color: var(--warn); background: var(--warn-soft); border-radius: 8px; padding: 8px 12px; }
+  .cites { display:flex; flex-wrap: wrap; gap: 6px; padding: 0 18px 12px; }
+  .cite { font-size: 12px; border: 1px solid var(--brand-line); color: var(--brand); background: var(--brand-soft); border-radius: 6px; padding: 2px 8px; }
+  .sources { border-top: 1px solid var(--line); }
+  .sources details { border-bottom: 1px solid var(--line); }
+  .sources summary { cursor: pointer; padding: 10px 18px; font-size: 13px; color: var(--ink-2); list-style: none; display:flex; justify-content: space-between; gap: 10px; }
+  .sources summary::-webkit-details-marker { display:none; }
+  .sources summary::before { content: "\25B8"; margin-right: 8px; color: var(--ink-3); }
+  .sources details[open] summary::before { content: "\25BE"; }
+  .sources summary span:first-child { flex: 1; }
+  .sources pre { margin: 0 18px 12px; }
+  pre { white-space: pre-wrap; font: 13px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; background: var(--surface-2);
+        border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .res-f { display:flex; align-items:center; gap: 10px; flex-wrap: wrap; padding: 10px 18px; font-size: 12px; color: var(--ink-3); background: var(--surface-2);
+           border-radius: 0 0 var(--radius) var(--radius); }
+  .res-f .spacer { flex: 1; }
+  .loading { padding: 18px; }
+  .bar { height: 10px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2), var(--line), var(--surface-2));
+         background-size: 200% 100%; animation: sh 1.2s infinite; margin: 10px 0; }
+  @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+  @media (prefers-reduced-motion: reduce) { .bar { animation: none; } }
+
+  /* ---------- viewer dialog ---------- */
+  dialog { border: 1px solid var(--line); border-radius: var(--radius); padding: 0; width: min(860px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+           background: var(--surface); color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+  dialog::backdrop { background: rgba(15,23,42,.55); }
+  .dlg-h { display:flex; align-items:center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .dlg-h h3 { margin: 0; font-size: 16px; flex: 1; overflow-wrap:anywhere; }
+  .dlg-tools { display:flex; gap: 10px; align-items:center; padding: 10px 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .dlg-tools input { flex: 1 1 220px; }
+  .dlg-b { padding: 14px 18px 18px; overflow: auto; max-height: calc(100vh - 220px); }
+  .dlg-b pre { margin: 0; border: 0; background: transparent; padding: 0; font-family: inherit; font-size: 14px; }
+  .v-h { display: block; font-weight: 700; font-size: 15px; margin-top: 6px; }
+  .res-b .cite { font-size: 13px; white-space: nowrap; }
+  mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+  .placeholder { display:flex; gap: 14px; align-items:flex-start; padding: 22px 18px; color: var(--ink-3); font-size: 14px; }
+  .placeholder svg { flex: none; color: var(--brand); margin-top: 2px; }
+  .placeholder strong { color: var(--ink); }
+  footer { max-width: 1240px; margin: 0 auto; padding: 0 16px 32px; font-size: 12px; color: var(--ink-3); overflow-wrap: anywhere; }
+  .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--brand)"/>
+        <circle cx="16" cy="15" r="6" fill="none" stroke="var(--brand-ink)" stroke-width="2.4"/>
+        <path d="M16 15v8" stroke="var(--brand-ink)" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <span class="brand-name">Vaultwise</span>
+      <span class="brand-tag">Private answers from your company documents</span>
+    </div>
+    <span class="spacer"></span>
+    <span class="badge" id="privacy" role="status"><span class="dot"></span><span id="privacy-t">Checking privacy...</span></span>
+  </div>
+</header>
+
+<div class="cloud-banner" id="cloud-banner" role="note" hidden>
+  <strong>Cloud demo.</strong> This copy of Vaultwise runs on a cloud server and is loaded with fictional sample documents.
+  Do not upload real confidential files here; use the local version (<code>run.bat</code>) for those.
+</div>
+<main class="wrap">
+  <!-- ================= document vault ================= -->
+  <aside class="panel" aria-labelledby="vault-h">
+    <div class="panel-h"><h2 id="vault-h">Document vault</h2><span class="count" id="doc-count">0 documents</span></div>
+    <div class="panel-b">
+      <p class="muted" style="margin:0" id="vault-hint">Add the documents your company shares with you. They are read and stored on this computer only.</p>
+      <form id="up">
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a file to add">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" style="color:var(--brand)">
+            <path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <strong>Drop a file here or click to choose</strong>
+          <span class="muted">PDF, Word, TXT or Markdown, up to 10 MB</span>
+          <span class="file" id="file-name"></span>
+          <input type="file" id="file" accept=".pdf,.docx,.txt,.md" class="sr" tabindex="-1">
+        </div>
+        <details class="paste"><summary>Or paste text instead</summary>
+          <textarea id="paste" placeholder="Paste the document text here"></textarea></details>
+        <label class="field" for="title">Title</label>
+        <input type="text" id="title" placeholder="e.g. Q3 vendor agreement" maxlength="120">
+        <label class="field" for="category">Type</label>
+        <select id="category">
+          <option>Contract</option><option>Company policy</option><option selected>Confidential document</option><option>Other</option>
+        </select>
+        <button class="btn primary block" id="upbtn" type="submit">Add to vault</button>
+        <div class="status" id="upstatus" role="status"></div>
+      </form>
+      <ul class="docs" id="docs"></ul>
+    </div>
+  </aside>
+
+  <!-- ================= ask ================= -->
+  <section>
+    <div class="panel" aria-labelledby="ask-h">
+      <div class="panel-h"><h2 id="ask-h">Find information in your documents</h2><span class="kbd">Ctrl + Enter to search</span></div>
+      <div class="panel-b">
+        <form id="ask">
+          <label class="sr" for="q">Your question</label>
+          <textarea id="q" class="ask-q" placeholder="Ask for specific information, e.g. What is the payment deadline? Or type: summarise this document" required></textarea>
+          <div class="row">
+            <div class="grow"><label class="field" for="scope">Search in</label><select id="scope"></select></div>
+            <div class="grow"><label class="field" for="mode">Search method</label>
+              <select id="mode">
+                <option value="hybrid" selected>Hybrid (recommended: most reliable)</option>
+                <option value="dense">Semantic (same meaning, other words)</option>
+                <option value="bm25">Keyword (exact words and numbers)</option>
+                <option value="none">No search (baseline: may be wrong)</option>
+              </select></div>
+            <button class="btn primary" id="go" type="submit">Search</button>
+          </div>
+          <div class="hint-box" id="mode-hint" aria-live="polite"></div>
+        </form>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+    <div id="out"><div class="panel result placeholder">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <div><strong>Answers appear here</strong><br>Each answer quotes the passage it came from, so you can check it in seconds. <span id="where-hint">Nothing you ask leaves this computer.</span></div>
+    </div></div>
+  </section>
+</main>
+
+<footer id="foot">Vaultwise runs entirely on this computer.</footer>
+
+<dialog id="viewer" aria-labelledby="v-title">
+  <div class="dlg-h"><h3 id="v-title"></h3><button class="btn ghost" id="v-close" type="button">Close</button></div>
+  <div class="dlg-tools"><input type="text" id="v-find" placeholder="Find in document..." aria-label="Find in document"><span class="muted" id="v-count"></span></div>
+  <div class="dlg-b"><div class="muted" id="v-meta" style="margin-bottom:10px"></div><pre id="v-text"></pre></div>
+</dialog>
+
+<script>
+const MODE_HINTS = {
+  hybrid: "<b>Hybrid:</b> combines keyword and meaning search. Best for most questions; answers quote your document and cite it.",
+  dense:  "<b>Semantic:</b> finds passages with the same meaning even if you use other words (\"pay\" finds \"salary\"). May miss exact codes or numbers.",
+  bm25:   "<b>Keyword:</b> finds passages containing your exact words. Good for names, clause numbers and amounts; can miss reworded questions.",
+  none:   "<b>Baseline:</b> the AI does not read your documents and answers from general memory. It usually cannot answer, or may be wrong. For comparison only.",
+};
+const DOC_CHIPS = ["Summarise this document", "What are the key deadlines and dates?", "What amounts or payments are mentioned?",
+                   "What am I not allowed to do?", "Who are the parties or contacts?"];
+const ALL_CHIPS = ["What are the key deadlines across my documents?", "What payment terms are mentioned?",
+                   "Which documents mention confidentiality?", "What obligations do I have?"];
+const DEMO_CHIPS = ["What is the per diem for international travel?", "I left my laptop in a taxi. What should I do?",
+                    "How many days of bereavement leave do we get?"];
+const ICONS = {
+  "Contract": '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',
+  "Company policy": '<path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+  "Confidential document": '<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  "Other": '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/>',
+};
+const $ = id => document.getElementById(id);
+let adminKey = null, docs = [], health = {};
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const titleOf = id => (docs.find(d => d.doc_id === id) || {}).title || id;
+const mine = () => docs.filter(d => d.uploaded);
+
+/* Small, safe Markdown renderer: text is escaped first, then **bold**, headings and bullet lists are formatted. */
+function md(text) {
+  const lines = esc(text.trim()).split(/\n/);
+  let html = "", inList = false;
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  for (let raw of lines) {
+    const l = raw.trim();
+    const bullet = l.match(/^([-*•]|\d+\.)\s+(.*)$/);
+    const heading = l.match(/^(#{1,4}\s+(.*)|\*\*([^*]+)\*\*:?)$/) || l.match(/^(Overview|Key points|Watch out for):?$/i);
+    if (bullet) { if (!inList) { html += "<ul>"; inList = true; } html += `<li>${inline(bullet[2])}</li>`; continue; }
+    if (inList) { html += "</ul>"; inList = false; }
+    if (!l) continue;
+    if (heading) html += `<h4>${inline(heading[2] || heading[3] || heading[1]).replace(/:$/, "")}</h4>`;
+    else html += `<p>${inline(l)}</p>`;
+  }
+  return html + (inList ? "</ul>" : "");
+}
+
+async function call(url, opts = {}) {
+  opts.headers = Object.assign({}, opts.headers || {}, adminKey ? {"x-admin-key": adminKey} : {});
+  let r = await fetch(url, opts);
+  if (r.status === 401) {
+    adminKey = prompt("This server requires an admin key to change documents:");
+    if (!adminKey) throw new Error("Admin key required");
+    opts.headers["x-admin-key"] = adminKey;
+    r = await fetch(url, opts);
+  }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.detail || r.statusText);
+  return d;
+}
+
+/* ---------------- privacy & footer ---------------- */
+async function loadHealth() {
+  const badge = $("privacy"), t = $("privacy-t");
+  try {
+    health = await call("/health");
+    const p = health.privacy || {};
+    if (health.deployment === "cloud") {
+      badge.className = "badge warn"; t.textContent = "Cloud demo";
+      badge.title = "This copy runs on a cloud server. Use the local version for real confidential documents.";
+      $("cloud-banner").hidden = false;
+      $("vault-hint").textContent = "This demo is preloaded with fictional sample documents. Files added here are stored on the demo server.";
+      const wh = $("where-hint"); if (wh) wh.textContent = "The AI model runs inside this server; no outside AI service is used.";
+      $("foot").textContent = `Vaultwise cloud demo. Answers: ${health.generation_model} · Summaries: ${health.summary_model} · ` +
+        `Search: ${health.embedding_model} + BM25. The AI model runs inside this server; no third-party AI service is used.`;
+      return;
+    }
+    if (p.model_server_on_this_machine && health.ollama_reachable) {
+      badge.className = "badge ok"; t.textContent = "Offline · Private";
+      badge.title = `AI runs on this computer. Documents stored in ${p.private_data_dir}. ` +
+                    (p.private_text_logged ? "" : "Questions about your documents are not logged.");
+    } else if (p.model_server_on_this_machine) {
+      badge.className = "badge bad"; t.textContent = "AI engine not running"; badge.title = "Start Ollama, then reload this page.";
+    } else { badge.className = "badge bad"; t.textContent = "Model server is not local"; }
+    $("foot").textContent = `Vaultwise runs entirely on this computer. Answers: ${health.generation_model} · Summaries: ${health.summary_model} · ` +
+      `Search: ${health.embedding_model} + BM25. Private data folder: ${p.private_data_dir || "-"}.`;
+  } catch (e) { badge.className = "badge bad"; t.textContent = "Server not reachable"; }
+}
+
+/* ---------------- documents ---------------- */
+async function loadDocs(selectId) {
+  try { docs = await call("/documents"); } catch (e) { $("docs").innerHTML = `<li class="empty">${esc(e.message)}</li>`; return; }
+  const m = mine();
+  $("doc-count").textContent = `${m.length} document${m.length === 1 ? "" : "s"}`;
+  $("docs").innerHTML = m.length ? m.map(d => `
+    <li class="doc">
+      <span class="doc-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true">${ICONS[d.category] || ICONS.Other}</svg></span>
+      <div><div class="doc-title">${esc(d.title)}</div>
+        <div class="doc-meta">${esc(d.category || "Other")}${d.added ? " · " + esc(d.added) : ""} · ${d.chunks} sections</div>
+        <div class="doc-acts">
+          <button class="btn ghost" type="button" data-sum="${esc(d.doc_id)}">Summarise</button>
+          <button class="btn ghost" type="button" data-view="${esc(d.doc_id)}">View</button>
+          <button class="btn ghost danger" type="button" data-del="${esc(d.doc_id)}">Delete</button>
+        </div></div>
+    </li>`).join("") : `<li class="empty">Your vault is empty.<br>Add a document above to start searching it.</li>`;
+
+  const scope = $("scope"), keep = selectId ?? scope.value;
+  const demo = docs.filter(d => !d.uploaded).map(d => d.doc_id).join(",");
+  scope.innerHTML =
+    (m.length ? `<option value="mine">All my documents (${m.length})</option>` : `<option value="mine" disabled>All my documents (add one first)</option>`) +
+    (m.length ? `<optgroup label="One document">${m.map(d => `<option value="${esc(d.doc_id)}">${esc(d.title)}</option>`).join("")}</optgroup>` : "") +
+    `<optgroup label="Demo (fictional sample data)"><option value="demo:${esc(demo)}">Sample company policies</option></optgroup>`;
+  const values = [...scope.options].filter(o => !o.disabled).map(o => o.value);
+  scope.value = values.includes(keep) ? keep : (m.length ? "mine" : values[values.length - 1]);
+
+  $("docs").querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!confirm(`Delete "${titleOf(b.dataset.del)}"? Its text and search index are removed from this computer.`)) return;
+    b.disabled = true;
+    try { await call("/documents/" + encodeURIComponent(b.dataset.del), {method: "DELETE"}); await loadDocs(); loadHealth(); }
+    catch (e) { setStatus(e.message, true); b.disabled = false; }
+  });
+  $("docs").querySelectorAll("[data-view]").forEach(b => b.onclick = () => openViewer(b.dataset.view));
+  $("docs").querySelectorAll("[data-sum]").forEach(b => b.onclick = () => {
+    $("scope").value = b.dataset.sum; renderChips(); $("q").value = "Summarise this document"; $("ask").requestSubmit();
+  });
+  renderChips();
+}
+
+function scopeDocIds() {
+  const v = $("scope").value;
+  if (v === "mine") return mine().map(d => d.doc_id);
+  if (v.startsWith("demo:")) return v.slice(5).split(",");
+  return [v];
+}
+
+function renderChips() {
+  const v = $("scope").value;
+  const list = v === "mine" ? ALL_CHIPS : v.startsWith("demo:") ? DEMO_CHIPS : DOC_CHIPS;
+  $("chips").innerHTML = list.map(t => `<button type="button" class="chip">${esc(t)}</button>`).join("");
+  $("chips").querySelectorAll(".chip").forEach(c => c.onclick = () => { $("q").value = c.textContent; $("q").focus(); });
+}
+
+/* ---------------- upload ---------------- */
+const drop = $("drop"), fileIn = $("file");
+drop.onclick = () => fileIn.click();
+drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileIn.click(); } };
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { if (e.dataTransfer.files[0]) { fileIn.files = e.dataTransfer.files; fileChosen(); } });
+fileIn.onchange = fileChosen;
+function fileChosen() {
+  const f = fileIn.files[0];
+  $("file-name").textContent = f ? f.name : "";
+  if (f && !$("title").value) $("title").value = f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+}
+function setStatus(msg, err) { const s = $("upstatus"); s.textContent = msg; s.className = "status " + (err ? "err" : "ok"); }
+
+$("up").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData();
+  fd.append("title", $("title").value); fd.append("category", $("category").value); fd.append("text", $("paste").value);
+  if (fileIn.files[0]) fd.append("file", fileIn.files[0]);
+  const b = $("upbtn"); b.disabled = true; b.textContent = "Reading document...";
+  setStatus("Extracting and indexing on this computer...", false);
+  try {
+    const d = await call("/documents/upload", {method: "POST", body: fd});
+    setStatus(`Added "${d.title}": ${d.words} words, ${d.chunks} sections.`, false);
+    $("title").value = ""; $("paste").value = ""; fileIn.value = ""; $("file-name").textContent = "";
+    await loadDocs(d.doc_id); loadHealth();
+  } catch (err) { setStatus("Could not add document: " + err.message, true); }
+  finally { b.disabled = false; b.textContent = "Add to vault"; }
+});
+
+/* ---------------- viewer ---------------- */
+let viewerText = "";
+async function openViewer(id) {
+  try {
+    const d = await call("/documents/" + encodeURIComponent(id));
+    viewerText = d.text;
+    $("v-title").textContent = d.title;
+    $("v-meta").textContent = `${d.category} · added ${d.added} · stored only on this computer`;
+    $("v-find").value = ""; renderViewer("");
+    $("viewer").showModal(); $("v-find").focus();
+  } catch (e) { setStatus(e.message, true); }
+}
+function renderViewer(term) {
+  const t = term.trim();
+  const re = t ? new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi") : null;
+  let n = 0;
+  const hl = s => re ? s.replace(re, m => { n++; return `<mark>${m}</mark>`; }) : s;
+  // hide the stored title line and internal "Type: ... | Private | Added" line; show "##" lines as headings
+  const lines = viewerText.split("\n").filter(l => !/^#\s/.test(l) && !/^Type: .*\| Private \|/.test(l));
+  $("v-text").innerHTML = lines.map(l => {
+    const h = l.match(/^#{2,6}\s+(.*)$/);
+    return h ? `<span class="v-h">${hl(esc(h[1]))}</span>` : hl(esc(l));
+  }).join("\n").replace(/^\n+/, "").replace(/<\/span>\n+/g, "</span>").replace(/\n{3,}/g, "\n\n");
+  $("v-count").textContent = t ? (n ? `${n} match${n === 1 ? "" : "es"}` : "No matches") : "";
+  const first = $("v-text").querySelector("mark"); if (first) first.scrollIntoView({block: "center"});
+}
+
+/* Turn "[doc-id]" or "[doc-id] > Section" written by the model into a readable source label. */
+function prettyCites(html) {
+  return html.replace(/\[([a-z0-9][a-z0-9-]+)\](\s*&gt;\s*([^<.,;]+))?/g, (m, id, _s, section) =>
+    docs.some(d => d.doc_id === id) ? `<span class="cite">${esc(titleOf(id))}${section ? " · " + section.trim() : ""}</span>` : m);
+}
+$("v-find").addEventListener("input", e => renderViewer(e.target.value));
+$("v-close").onclick = () => $("viewer").close();
+
+/* ---------------- ask ---------------- */
+$("mode").addEventListener("change", () => { $("mode-hint").innerHTML = MODE_HINTS[$("mode").value]; });
+$("mode-hint").innerHTML = MODE_HINTS.hybrid;
+$("scope").addEventListener("change", renderChips);
+$("q").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) $("ask").requestSubmit(); });
+
+$("ask").addEventListener("submit", async e => {
+  e.preventDefault();
+  const question = $("q").value.trim(), ids = scopeDocIds(), mode = $("mode").value;
+  if (!question) return;
+  if (!ids.length) { $("out").innerHTML = `<div class="panel result"><div class="res-b">Add a document to your vault first.</div></div>`; return; }
+  const summarising = /summar|overview|key points|main points|gist|outline/i.test(question);
+  if (summarising && ids.length > 1 && $("scope").value === "mine") {
+    $("out").innerHTML = `<div class="panel result"><div class="res-b">To get a summary, choose one document under <b>Search in</b> (or click <b>Summarise</b> next to it in the vault).</div></div>`;
+    return;
+  }
+  const go = $("go"); go.disabled = true;
+  $("out").innerHTML = `<div class="panel result loading" aria-busy="true"><div class="muted">${summarising ? "Reading the whole document. Summaries take 1 to 2 minutes." : "Searching your documents..."}</div>
+    <div class="bar" style="width:92%"></div><div class="bar" style="width:76%"></div><div class="bar" style="width:84%"></div></div>`;
+  try {
+    const d = await call("/ask", {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({question, mode, doc_ids: ids})});
+    renderResult(d);
+  } catch (err) {
+    $("out").innerHTML = `<div class="panel result"><div class="res-b" style="color:var(--bad)">Something went wrong: ${esc(err.message || err)}</div></div>`;
+  } finally { go.disabled = false; }
+});
+
+function renderResult(d) {
+  const kind = d.summary_of ? "summary" : d.refused ? "none" : "answer";
+  const label = {summary: "Summary", none: "Not in your documents", answer: "Answer"}[kind];
+  const modeName = {hybrid: "Hybrid search", dense: "Semantic search", bm25: "Keyword search", none: "No document search", summary: "Whole-document summary"}[d.mode] || d.mode;
+  const note = d.summary_of ? `<div class="note">AI-generated summary of ${d.summary_of.words} words across ${d.summary_of.sections.length} sections. Check important dates and amounts with View before relying on them.</div>`
+             : d.mode === "none" ? `<div class="note">Baseline mode: this answer was written without reading your documents.</div>` : "";
+  const cites = d.citations.length ? `<div class="cites">${d.citations.map(c => `<span class="cite">Source: ${esc(titleOf(c))}</span>`).join("")}</div>` : "";
+  const sources = d.sources.length ? `<div class="sources">${d.sources.map(s => `<details><summary><span>${esc(titleOf(s.doc_id))} · ${esc(s.section)}</span><span>passage ${s.rank}</span></summary><pre>${esc(s.text)}</pre></details>`).join("")}</div>` : "";
+  $("out").innerHTML = `<article class="panel result">
+    <div class="res-h"><span class="pill ${kind}">${label}</span><span class="res-q">${esc(d.question)}</span></div>
+    <div class="res-b">${prettyCites(md(d.answer))}</div>${note}${cites}${sources}
+    <div class="res-f"><span>${esc(modeName)} · ${esc(d.model)} · ${d.latency_s.total.toFixed(1)} s</span><span class="spacer"></span>
+      <span id="fbm">Helpful?</span><button class="btn ghost" type="button" data-h="true">Yes</button><button class="btn ghost" type="button" data-h="false">No</button></div>
+  </article>`;
+  $("out").querySelectorAll("[data-h]").forEach(b => b.onclick = async () => {
+    try { await call("/feedback", {method: "POST", headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({query_id: d.query_id, helpful: b.dataset.h === "true"})});
+          $("fbm").textContent = "Thanks for the feedback"; $("out").querySelectorAll("[data-h]").forEach(x => x.remove()); }
+    catch (e) { $("fbm").textContent = e.message; }
+  });
+}
+
+loadHealth();
+loadDocs();
+</script>
+</body>
+</html>

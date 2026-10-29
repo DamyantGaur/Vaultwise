@@ -1,0 +1,7 @@
+Loaded index 6c6d03491b28bce1: 149 chunks from 21 documents
+  summary contract llama3.2:3b: 46s
+  summary memo llama3.2:3b: 33s
+  summary vendor llama3.2:3b: 45s
+  summary contract llama3.1:8b: 106s
+  summary memo llama3.1:8b: 66s
+  summary vendor llama3.1:8b: 91s

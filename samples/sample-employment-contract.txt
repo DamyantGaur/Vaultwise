@@ -1,0 +1,38 @@
+EMPLOYMENT AGREEMENT
+
+This Employment Agreement is made on 1 July 2026 between Orbitline Technologies Private Limited, Pune ("the Company") and Ms. A. Sharma ("the Employee"). This is a fictional sample contract for testing Vaultwise.
+
+1. Position and Duties
+The Employee is appointed as Senior Data Analyst in the Analytics department and reports to the Head of Analytics. The Employee shall perform the duties reasonably assigned by the Company from time to time.
+
+2. Commencement and Probation
+Employment commences on 15 July 2026. The Employee will be on probation for 3 months. During probation either party may terminate this Agreement by giving 7 days written notice.
+
+3. Place of Work and Working Hours
+The Employee will work from the Company office in Baner, Pune, with up to 2 days per week of remote work with manager approval. Normal working hours are 9:30 AM to 6:30 PM, Monday to Friday, totalling 45 hours per week including breaks.
+
+4. Compensation
+The Employee will receive a fixed annual salary (cost to company) of INR 18,00,000, paid in 12 equal monthly instalments on the last working day of each month. The Employee is also eligible for an annual performance bonus of up to 10 percent of fixed salary, paid in May, subject to company and individual performance.
+
+5. Leave
+The Employee is entitled to 21 days of paid annual leave per calendar year, 10 days of sick leave and the public holidays notified by the Company. Up to 5 unused annual leave days may be carried forward to the next year.
+
+6. Benefits
+The Employee is covered by group health insurance of INR 3,00,000 per year for the Employee, spouse and two children. The Company reimburses mobile phone expenses up to INR 1,000 per month.
+
+7. Confidentiality
+The Employee shall not disclose any confidential information of the Company, its clients or partners, during employment or for 3 years after it ends. All documents, data and code remain the property of the Company and must be returned on exit.
+
+8. Intellectual Property
+All work products, inventions, software and reports created by the Employee in the course of employment belong exclusively to the Company.
+
+9. Non-Solicitation
+For 12 months after the end of employment, the Employee shall not solicit any employee or client of the Company to leave the Company.
+
+10. Termination and Notice Period
+After confirmation, either party may terminate this Agreement by giving 60 days written notice or salary in lieu of notice. The Company may terminate employment without notice for gross misconduct, including fraud, harassment or a serious breach of confidentiality.
+
+11. Governing Law and Disputes
+This Agreement is governed by the laws of India. Any dispute shall be subject to the exclusive jurisdiction of the courts in Pune.
+
+Signed for Orbitline Technologies Private Limited and by the Employee.

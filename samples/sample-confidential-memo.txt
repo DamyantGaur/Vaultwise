@@ -1,0 +1,22 @@
+CONFIDENTIAL - INTERNAL USE ONLY
+
+Orbitline Technologies Private Limited - Project Nimbus Briefing for the Analytics Team
+Issued by: Office of the CTO, 20 October 2026. This is a fictional sample document for testing Vaultwise.
+
+1. Purpose
+This memo informs selected Analytics team members about Project Nimbus, the migration of the company's customer data platform from the on-premise data centre in Pune to a private cloud region in Mumbai. Do not forward this memo outside the distribution list.
+
+2. Timeline
+Phase 1 (data inventory and classification) runs from 1 November to 15 December 2026. Phase 2 (pilot migration of 3 client accounts) runs from 5 January to 28 February 2027. Phase 3 (full cut-over) is planned for the weekend of 17-18 April 2027. The on-premise data centre will be decommissioned by 30 June 2027.
+
+3. Budget
+The approved budget is INR 4.2 crore, of which INR 1.1 crore is reserved for security testing and an external audit. Any spend above INR 10 lakh needs approval from the CTO.
+
+4. Your Responsibilities
+Analytics team members must complete the data inventory for their assigned client accounts by 15 December 2026, tag every dataset with its classification level, and attend the mandatory migration training on 12 November 2026.
+
+5. Confidentiality Rules
+Information about Project Nimbus must not be shared with clients, vendors or colleagues outside the distribution list until the public announcement planned for March 2027. Do not discuss the project on public channels or upload this memo to any external tool, including public AI chatbots. Breaches are handled under the Code of Conduct and may lead to disciplinary action.
+
+6. Contacts
+Project lead: Head of Data Platforms. Questions should be sent to the Nimbus programme office mailbox only.
