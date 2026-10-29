@@ -24,7 +24,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from . import __version__
-from .config import LOCAL_HOSTS, PROJECT_ROOT, PrivacyError, load_config
+from .config import LOCAL_HOSTS, PrivacyError, load_config
 from .documents import (CATEGORIES, MAX_UPLOAD_BYTES, UPLOAD_PREFIX, delete_user_document, extract_text,
                         read_user_document, save_user_document)
 from .llm import OllamaClient, OllamaError
@@ -65,23 +65,6 @@ def is_private(doc_id: str) -> bool:
     return doc_id.startswith(UPLOAD_PREFIX)
 
 
-SAMPLES = [  # fictional documents shipped in samples/, loaded into the cloud demo so it is usable at once
-    ("My employment contract", "Contract", "sample-employment-contract.txt"),
-    ("Project Nimbus memo", "Confidential document", "sample-confidential-memo.txt"),
-    ("Vendor services agreement", "Contract", "sample-vendor-agreement.txt"),
-]
-
-
-def preload_samples(upload_dir: str) -> None:
-    """Add the fictional sample documents to an empty vault (cloud demo only)."""
-    samples_dir = PROJECT_ROOT / "samples"
-    if any(Path(upload_dir).glob(f"{UPLOAD_PREFIX}*.md")) or not samples_dir.is_dir():
-        return
-    for title, category, name in SAMPLES:
-        if (samples_dir / name).exists():
-            save_user_document(upload_dir, title, (samples_dir / name).read_text(encoding="utf-8"), category)
-
-
 def create_app(pipeline: RAGPipeline | None = None, cfg: dict | None = None) -> FastAPI:
     cfg = cfg or (pipeline.cfg if pipeline else load_config())
     app = FastAPI(title="Vaultwise", version=__version__,
@@ -91,8 +74,6 @@ def create_app(pipeline: RAGPipeline | None = None, cfg: dict | None = None) -> 
     feedback_log = JsonlLog(Path(cfg["log_dir"]) / "feedback.jsonl")
     upload_dir = cfg.get("upload_dir")
     log_private_text = cfg.get("privacy", {}).get("log_private_text", False)
-    if cfg.get("preload_samples") and upload_dir:
-        preload_samples(upload_dir)
 
     def get_pipeline() -> RAGPipeline:
         if state["pipeline"] is None:
@@ -124,9 +105,7 @@ def create_app(pipeline: RAGPipeline | None = None, cfg: dict | None = None) -> 
         client = p.client if p else OllamaClient(cfg["ollama"]["base_url"], cfg["ollama"]["timeout_s"])
         host = (urlparse(cfg["ollama"]["base_url"]).hostname or "").lower()
         n_private = len(list(Path(upload_dir).glob(f"{UPLOAD_PREFIX}*.md"))) if upload_dir and Path(upload_dir).is_dir() else 0
-        return {"status": "ok", "version": __version__, "deployment": cfg.get("deployment", "local"),
-                "uploads_need_key": bool(os.environ.get("VAULTWISE_ADMIN_KEY")),
-                "ollama_reachable": client.is_alive(),
+        return {"status": "ok", "version": __version__, "ollama_reachable": client.is_alive(),
                 "index_loaded": p is not None, "n_chunks": len(p.index.chunks) if p else None,
                 "generation_model": cfg["generation"]["model"], "embedding_model": cfg["embedding"]["model"],
                 "summary_model": cfg["generation"].get("summary_model") or cfg["generation"]["model"],

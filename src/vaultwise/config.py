@@ -37,13 +37,6 @@ def load_config(path: str | os.PathLike | None = None, overrides: dict[str, Any]
             continue
         cfg[key] = _resolve(str(cfg[key]).replace("{private_dir}", cfg["private_dir"]))
     cfg.setdefault("privacy", {"allow_remote_llm": False, "log_private_text": False})
-    # Deployment overrides (used by the cloud container; local runs need none of these)
-    cfg["deployment"] = os.environ.get("VAULTWISE_MODE", cfg.get("deployment", "local"))
-    if os.environ.get("VAULTWISE_MODEL"):
-        cfg["generation"]["model"] = os.environ["VAULTWISE_MODEL"]
-    if os.environ.get("VAULTWISE_SUMMARY_MODEL"):
-        cfg["generation"]["summary_model"] = os.environ["VAULTWISE_SUMMARY_MODEL"]
-    cfg["preload_samples"] = os.environ.get("VAULTWISE_PRELOAD_SAMPLES", "") == "1"
     return cfg
 
 

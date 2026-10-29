@@ -40,12 +40,6 @@
   .badge .dot { width:8px; height:8px; border-radius:50%; background: var(--ink-3); }
   .badge.ok { color: var(--ok); background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 30%, transparent); }
   .badge.ok .dot { background: var(--ok); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 25%, transparent); }
-  .badge.warn { color: var(--warn); background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
-  .badge.warn .dot { background: var(--warn); }
-  .cloud-banner { max-width: 1240px; margin: 16px auto 0; padding: 10px 16px; border-radius: 10px; font-size: 14px;
-                  color: var(--warn); background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn) 30%, transparent); }
-  .cloud-banner[hidden] { display: none; }
-  @media (max-width: 1272px) { .cloud-banner { margin: 16px 16px 0; } }
   .badge.bad { color: var(--bad); background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
   .badge.bad .dot { background: var(--bad); }
 
@@ -186,10 +180,6 @@
   </div>
 </header>
 
-<div class="cloud-banner" id="cloud-banner" role="note" hidden>
-  <strong>Cloud demo.</strong> This copy of Vaultwise runs on a cloud server and is loaded with fictional sample documents.
-  Do not upload real confidential files here; use the local version (<code>run.bat</code>) for those.
-</div>
 <main class="wrap">
   <!-- ================= document vault ================= -->
   <aside class="panel" aria-labelledby="vault-h">
@@ -323,16 +313,6 @@ async function loadHealth() {
   try {
     health = await call("/health");
     const p = health.privacy || {};
-    if (health.deployment === "cloud") {
-      badge.className = "badge warn"; t.textContent = "Cloud demo";
-      badge.title = "This copy runs on a cloud server. Use the local version for real confidential documents.";
-      $("cloud-banner").hidden = false;
-      $("vault-hint").textContent = "This demo is preloaded with fictional sample documents. Files added here are stored on the demo server.";
-      const wh = $("where-hint"); if (wh) wh.textContent = "The AI model runs inside this server; no outside AI service is used.";
-      $("foot").textContent = `Vaultwise cloud demo. Answers: ${health.generation_model} · Summaries: ${health.summary_model} · ` +
-        `Search: ${health.embedding_model} + BM25. The AI model runs inside this server; no third-party AI service is used.`;
-      return;
-    }
     if (p.model_server_on_this_machine && health.ollama_reachable) {
       badge.className = "badge ok"; t.textContent = "Offline · Private";
       badge.title = `AI runs on this computer. Documents stored in ${p.private_data_dir}. ` +

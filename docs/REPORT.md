@@ -86,7 +86,7 @@ question → BM25 top-20 + dense top-20 → RRF (k=60) → top-4 chunks
 | Summaries | whole document, map-reduce in ~1,500-word parts; `llama3.1:8b` | `src/vaultwise/pipeline.py` |
 | Privacy controls | refuses a non-local model server; private questions logged as metadata only; binds to 127.0.0.1; no external web resources | `config.py`, `api.py` |
 | Serving | FastAPI with request validation, admin key, query and feedback logs; web dashboard; one-command launcher `run.bat` | `src/vaultwise/api.py`, `static/index.html` |
-| Tests | 41 pytest tests (chunking, BM25, RRF, citation/refusal parsing, metrics, API, uploads, summaries, privacy, cloud mode, label consistency of both evaluation sets) with a fake LLM | `tests/` |
+| Tests | 39 pytest tests (chunking, BM25, RRF, citation/refusal parsing, metrics, API, uploads, summaries, privacy, label consistency of both evaluation sets) with a fake LLM | `tests/` |
 
 All models run locally, so no question or document leaves the machine.
 
@@ -396,33 +396,26 @@ the source:
 - **Before production:** add SSO in front of the API, per-user access control for private documents and
   per-department access for policies, encryption at rest for `~/.vaultwise/`, and OCR for scanned PDFs.
 
-### 6.1 CI/CD pipeline and cloud deployment
+### 6.1 Continuous integration pipeline
 
-A GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) runs on every push and pull request. Each stage runs
-only if the previous one passed, so a broken or worse build is never deployed.
+A GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) runs on every push and pull request
+(https://github.com/DamyantGaur/Vaultwise). The build stage runs only if the tests pass, and any failure marks
+the commit as failed on GitHub.
 
 | Stage | Checks | Fails when |
 |---|---|---|
-| 1. Test | ruff lint; 41 unit/API tests; **AI quality gate** (`eval/quality_gate.py`): both evaluations are re-scored from the stored outputs with the current code, then 9 thresholds are checked | any test fails, or e.g. accuracy < 95%, policy refusals < 95%, unsupported-number rate > 8%, citation precision < 85%, held-out accuracy < 90%, or the margin over the no-retrieval baseline < 50 points |
-| 2. Build + end-to-end | builds the server image and the cloud image (app + Ollama + Llama 3.2 3B + nomic-embed-text), starts the container and asks it "What is my notice period?" about the sample contract | the image does not build or start, or the answer is not "60 days" |
-| 3. Deploy | on `main` only: uploads the cloud bundle to a private Hugging Face Space (Docker SDK; free 2-vCPU / 16 GB tier) and sets the admin key as a Space secret | missing credentials (skipped with a message) or upload error |
-| 4. Verify | waits for the Space to build and run, then asks the live URL the same question | build/runtime error, or a wrong live answer |
+| 1. Test | ruff lint; 39 unit/API tests; **AI quality gate** (`eval/quality_gate.py`): both evaluations are re-scored from the stored outputs with the current code, then 9 thresholds are checked | any test fails, or e.g. accuracy < 95%, policy refusals < 95%, unsupported-number rate > 8%, citation precision < 85%, held-out accuracy < 90%, or the margin over the no-retrieval baseline < 50 points |
+| 2. Build | builds the Docker image, starts the container, checks that `/health` and the dashboard respond | the image does not build, the container does not start, or the app does not respond |
 
 The quality gate is the AI-specific part. A normal CI pipeline only checks that code runs; this one also checks
 that **answer quality has not dropped**, using the measurements from §4 as a regression baseline. Running the
-real model would make CI slow and costly, so the gate re-scores stored outputs instead. The end-to-end stage
-covers the live model path.
+real model would make CI slow and costly, so the gate re-scores stored outputs instead.
 
-**The cloud deployment is a demo, by design.** On a cloud host, documents are no longer on the user's laptop, so
-the deployed copy runs in `VAULTWISE_MODE=cloud`:
-- a visible "Cloud demo" banner;
-- three fictional sample documents preloaded;
-- uploads and deletions only with an admin key;
-- the 3B model for summaries, since 8B is too slow on the free CPU.
-
-The model still runs **inside the container**, so no third-party AI service sees any text. A company would deploy
-the same image in its own private cloud network, which preserves the privacy property. Step-by-step setup:
-`DEPLOYMENT.md`.
+**No cloud deployment, by design.** Vaultwise's core promise is that confidential documents never leave the
+user's computer. A public cloud deployment was prototyped and then removed: documents on a cloud host are no
+longer on the user's machine, and the free hosting tiers available could not run the model. Vaultwise is deployed
+locally with `run.bat`. A company could run the same Docker image (`Dockerfile`, `docker-compose.yml`) on its own
+internal server.
 
 ### 6.2 Market position
 
@@ -447,7 +440,7 @@ A competitor analysis of 24 products, with prices and data handling verified on 
 ```bash
 ollama pull llama3.2:3b && ollama pull llama3.1:8b && ollama pull nomic-embed-text
 pip install -r requirements.txt
-python -m pytest -q                                              # 41 tests, no Ollama needed
+python -m pytest -q                                              # 39 tests, no Ollama needed
 # evaluation 1
 python eval/run_eval.py retrieval                                # retrieval + chunking ablation
 python eval/run_eval.py generate                                 # 5 systems x 76 questions, llama3.2:3b
@@ -515,7 +508,7 @@ and evaluation on real company documents and logged employee questions.
 | **Research question and experimental alignment** | §1, §3 | Problem → base paper and its 3 gaps → 3 improvements, each with its own metric → RQ and H1–H4 → two evaluations matching the two ways the system is used (policy knowledge base; private document) |
 | **Quantitative evaluation** | §3.1–3.2 | 114 labelled questions + 6 summaries; baselines: no retrieval, base-paper vanilla RAG, BM25, dense, model size; metrics: Hit@k, MRR, key-fact accuracy, refusal, false refusal, unsupported numbers, citation precision/recall, summary coverage, latency; bootstrap CIs; McNemar tests |
 | **Results and interpretation** | §4.1–4.5 | Tables with CIs, per-category and held-out splits, significance tests; each hypothesis marked supported / partly supported, including the non-significant comparisons |
-| **Technical implementation** | §2, §6, code | Ingestion, hybrid RRF retrieval, grounded generation, citations, abstention, summaries, private vault, privacy controls, REST API, dashboard, launcher; CI/CD pipeline with an AI quality gate; cloud deployment (§6.1); 41 automated tests |
+| **Technical implementation** | §2, §6, code | Ingestion, hybrid RRF retrieval, grounded generation, citations, abstention, summaries, private vault, privacy controls, REST API, dashboard, launcher; CI pipeline with an AI quality gate (§6.1); 39 automated tests |
 | **Limitations and failure analysis** | §5 | Error attribution per system, every failure listed (`results/failures.md`, `results/private_failures.md`), two manual audits (κ = 0.96; clause attribution 15/19), scorer blind spots, a scorer bug and its measured impact, threats to validity |
 | **Methodology and reproducibility** | §3, §7, `RUN_GUIDE.md` | Fixed config, seed and temperature; model digests; raw outputs stored; one command per stage; label-consistency tests; retrieval stage re-run from scratch and compared; every push re-runs tests, re-scores the evaluations and rebuilds the container in CI |
 

@@ -145,18 +145,17 @@ docker compose exec ollama ollama pull llama3.2:3b
 docker compose exec ollama ollama pull nomic-embed-text
 ```
 
-### CI/CD pipeline and cloud deployment
+### Continuous integration (GitHub Actions)
 
-Every push to GitHub runs `.github/workflows/ci-cd.yml`:
+Every push and pull request runs `.github/workflows/ci-cd.yml` on GitHub:
 
-1. **Test:** lint, 41 unit/API tests, and an **AI quality gate** that re-scores the stored evaluation answers and
-   fails if accuracy, refusals, citation precision or the margin over the baseline drop.
-2. **Build:** both Docker images; the cloud image (app + Ollama + models) is started and asked a real question.
-3. **Deploy:** on `main`, the app goes to a **Hugging Face Space**.
-4. **Verify:** the live URL must answer the same question correctly.
+1. **Test:** lint (ruff), 39 unit/API tests, and an **AI quality gate** (`eval/quality_gate.py`). The gate
+   re-scores the stored evaluation answers with the current code and fails if accuracy, refusals, citation
+   precision or the margin over the no-retrieval baseline drop below set thresholds.
+2. **Build:** builds the Docker image, starts the container, and checks that the API and dashboard respond.
 
-The cloud copy is a clearly labelled **demo** with fictional sample documents; real confidential documents
-belong in the local version. Setup steps (GitHub repo, Hugging Face token): [DEPLOYMENT.md](DEPLOYMENT.md).
+A failing stage marks the commit red on GitHub, so a broken or lower-quality change is caught before it's used.
+Vaultwise is deployed by running it locally (`run.bat`), which keeps confidential documents on the user's computer.
 
 ### Competitors
 
@@ -306,8 +305,6 @@ results/                    raw runs, tables, failure lists, per-question CSV, f
 docs/REPORT.md              project report
 docs/COMPETITORS.md         competitor analysis with sources
 RUN_GUIDE.md                how to start Vaultwise from the terminal
-DEPLOYMENT.md               CI/CD pipeline and Hugging Face deployment
-.github/workflows/ci-cd.yml the pipeline: test -> build + end-to-end -> deploy -> verify
-deploy/                     cloud image (Dockerfile, start.sh, Space README) and the deploy/smoke-test script
+.github/workflows/ci-cd.yml the CI pipeline: lint + tests + quality gate -> Docker build + start-up check
 eval/quality_gate.py        the AI quality thresholds the pipeline enforces
 ```

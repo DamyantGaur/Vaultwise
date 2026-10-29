@@ -110,27 +110,3 @@ def test_view_document_and_health_privacy(cfg):
     assert docs["user-my-contract"]["category"] == "Contract"
     p = api.get("/health").json()["privacy"]
     assert p["model_server_on_this_machine"] and p["private_documents"] == 1 and not p["private_text_logged"]
-
-
-def test_cloud_mode_settings_and_sample_preload(monkeypatch, tmp_path):
-    monkeypatch.setenv("VAULTWISE_MODE", "cloud")
-    monkeypatch.setenv("VAULTWISE_PRELOAD_SAMPLES", "1")
-    monkeypatch.setenv("VAULTWISE_SUMMARY_MODEL", "llama3.2:3b")
-    cfg = load_config(overrides={"index_dir": str(tmp_path / "index"), "log_dir": str(tmp_path / "logs"),
-                                 "upload_dir": str(tmp_path / "uploads")})
-    assert cfg["deployment"] == "cloud" and cfg["preload_samples"]
-    assert cfg["generation"]["summary_model"] == "llama3.2:3b"
-    pipe, _ = make_pipeline(cfg)
-    api = TestClient(create_app(pipe))  # preloads the three fictional samples into the empty vault
-    mine = [d["doc_id"] for d in api.get("/documents").json() if d["uploaded"]]
-    assert mine == []  # pipeline index was built before preload; a reindex picks them up
-    pipe.reindex(log=lambda *_: None)
-    mine = sorted(d["doc_id"] for d in api.get("/documents").json() if d["uploaded"])
-    assert mine == ["user-my-employment-contract", "user-project-nimbus-memo", "user-vendor-services-agreement"]
-    assert api.get("/health").json()["deployment"] == "cloud"
-    create_app(pipe)  # preloading again must not duplicate documents
-    assert len(list((tmp_path / "uploads").glob("user-*.md"))) == 3
-
-
-def test_local_mode_is_default():
-    assert load_config()["deployment"] == "local" and not load_config()["preload_samples"]
