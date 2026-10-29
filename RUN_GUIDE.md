@@ -1,7 +1,8 @@
 # How to run Vaultwise from the terminal
 
-Vaultwise runs entirely on your computer with **one command**. It needs only Python and Ollama: no Docker,
-no GPU, and no internet connection (internet is needed only once, to download the AI models).
+Vaultwise runs entirely on your computer with **one command**, either directly (`run.bat`, needs Python and
+Ollama) or in Docker (`docker compose up -d`, needs Docker Desktop). No GPU is needed, and no internet connection
+once the AI models are downloaded.
 
 ---
 
@@ -59,6 +60,38 @@ ollama pull llama3.2:3b
 ollama pull nomic-embed-text
 ollama pull llama3.1:8b
 ```
+
+---
+
+## Run it in Docker (one command)
+
+1. Start **Docker Desktop** and wait until it says "Engine running".
+2. In the project folder, run:
+
+   ```powershell
+   docker compose up -d
+   ```
+
+3. Open **http://localhost:8080**.
+
+The first run downloads the AI models into Docker (about 2.3 GB, a few minutes). Later starts take seconds.
+In Docker Desktop you will see a **vaultwise** project with three containers:
+
+| Container | Status you should see |
+|---|---|
+| `vaultwise-app` | Running (the web app) |
+| `vaultwise-ollama` | Running (the AI engine) |
+| `vaultwise-models` | Exited (0): it only downloads the models, then stops; that is normal |
+
+| Task | Command |
+|---|---|
+| Stop it | `docker compose down` |
+| Start it again | `docker compose up -d` |
+| See the app's log | `docker compose logs app` |
+| Delete everything, including stored documents and models | `docker compose down -v` |
+
+The Docker copy keeps its documents in the Docker volume `vaultwise-data`, separate from the `run.bat` copy, so
+documents added in one do not appear in the other. In Docker, summaries use the 3B model.
 
 ---
 

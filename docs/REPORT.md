@@ -363,8 +363,12 @@ the source:
 - **Operations:** `/health` for monitoring; JSONL audit log of every question, answer, sources and latency;
   thumbs up/down feedback linked by `query_id`. Refused questions show documentation gaps, and thumbs-down answers
   become new evaluation questions, so the test set grows with real traffic.
-- **Packaging:** a one-command launcher (`run.bat` / `run.ps1`) that installs what is missing and starts the app;
-  uploads and deletions can be protected with `VAULTWISE_ADMIN_KEY`.
+- **Packaging, two single-command options:** `run.bat` (installs what is missing and starts the app directly), or
+  Docker, `docker compose up -d`, which starts three containers: `vaultwise-app` (the web app, published on
+  127.0.0.1:8080 only), `vaultwise-ollama` (the AI engine, with no published port, so only the app can reach it) and
+  `vaultwise-models` (a one-off that downloads the models, then exits). Documents live in the Docker volume
+  `vaultwise-data`, never in the synced project folder. The app container runs as a non-root user and has a
+  health check. Uploads and deletions can be protected with `VAULTWISE_ADMIN_KEY`.
 - **Private documents (contracts, policies shared with the employee, confidential files):** the UI section
   *Your private documents* accepts PDF, DOCX, TXT or MD files (or pasted text) with a category. Clause headings
   ("10. Termination and Notice Period") become sections, only the new chunks are embedded (≈3 s for a 465-word
@@ -392,20 +396,21 @@ the source:
   evaluation-1 numbers (§4.1–4.4) were produced before this change and do not include it; evaluation 2 (§4.5)
   includes it, which is why it reports no citation metrics.
 - **Running it:** `run.bat` checks Python, packages, Ollama and models, starts the app on 127.0.0.1 and opens
-  the browser (see `RUN_GUIDE.md`). It needs only Python and Ollama.
+  the browser (see `RUN_GUIDE.md`). It needs only Python and Ollama; the Docker option needs only Docker.
 - **Before production:** add SSO in front of the API, per-user access control for private documents and
   per-department access for policies, encryption at rest for `~/.vaultwise/`, and OCR for scanned PDFs.
 
 ### 6.1 Continuous integration pipeline
 
 A GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) runs on every push and pull request
-(https://github.com/DamyantGaur/Vaultwise). The start-up stage runs only if the tests pass, and any failure
-marks the commit as failed on GitHub.
+(https://github.com/DamyantGaur/Vaultwise). The start-up and Docker stages run only if the tests pass, and any
+failure marks the commit as failed on GitHub.
 
 | Stage | Checks | Fails when |
 |---|---|---|
 | 1. Test | ruff lint; 39 unit/API tests; **AI quality gate** (`eval/quality_gate.py`): both evaluations are re-scored from the stored outputs with the current code, then 9 thresholds are checked | any test fails, or e.g. accuracy < 95%, policy refusals < 95%, unsupported-number rate > 8%, citation precision < 85%, held-out accuracy < 90%, or the margin over the no-retrieval baseline < 50 points |
 | 2. Start-up check | installs the dependencies as a user would, starts the server, checks that `/health` and the dashboard respond | the installation fails, the server does not start, or the app does not respond |
+| 3. Docker check | validates `docker-compose.yml`, builds the app image, runs the container, checks that `/health` and the dashboard respond | the compose file is invalid, the image does not build, or the container does not serve the app |
 
 The quality gate is the AI-specific part. A normal CI pipeline only checks that code runs; this one also checks
 that **answer quality has not dropped**, using the measurements from §4 as a regression baseline. Running the
@@ -414,7 +419,8 @@ real model would make CI slow and costly, so the gate re-scores stored outputs i
 **No cloud deployment, by design.** Vaultwise's core promise is that confidential documents never leave the
 user's computer. A public cloud deployment was prototyped and then removed: documents on a cloud host are no
 longer on the user's machine, and the free hosting tiers available could not run the model. Vaultwise is deployed
-locally with one command, `run.bat`, on each employee's own computer.
+locally with one command on each employee's own computer: `run.bat`, or `docker compose up -d` for the
+containerised version. A company could run the same containers on its own internal server.
 
 ### 6.2 Market position
 

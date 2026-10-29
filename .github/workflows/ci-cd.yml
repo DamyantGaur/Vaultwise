@@ -1,6 +1,7 @@
 # Vaultwise CI
 #  1. test     - lint, unit/API tests, and the AI quality gate (re-scores stored evaluation outputs)
 #  2. startup  - installs the app the way a user does and checks that the server starts and responds
+#  3. docker   - validates docker-compose.yml, builds the app image, runs the container, checks it responds
 # Runs on every push and pull request. Any failure marks the commit red, so a broken or lower-quality
 # change is caught before it is merged.
 name: CI
@@ -71,3 +72,30 @@ jobs:
       - name: Server log
         if: always()
         run: tail -n 40 server.log || true
+
+  docker:
+    name: Docker build and container check
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker-compose.yml
+        run: docker compose config -q
+      - name: Build the app image
+        run: docker compose build app
+      - name: Start the app container
+        run: docker run -d --name vaultwise-app -p 8080:8000 vaultwise-app:latest
+      - name: Check that the container serves the app
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8080/health > health.json; then break; fi
+            sleep 2
+          done
+          cat health.json
+          grep -q '"status":"ok"' health.json
+          curl -sf http://127.0.0.1:8080/ | grep -q "<title>Vaultwise</title>"
+          echo "Container serves /health and the dashboard"
+      - name: Container log
+        if: always()
+        run: docker logs vaultwise-app 2>&1 | tail -n 40 || true

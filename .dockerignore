@@ -1,0 +1,14 @@
+.git
+.github
+.pytest_cache
+.ruff_cache
+**/__pycache__
+build
+results
+docs
+tests
+eval
+samples
+*.md
+run.bat
+run.ps1

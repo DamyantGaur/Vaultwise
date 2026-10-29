@@ -1,0 +1,51 @@
+# Vaultwise in Docker: ONE command starts everything (the first run also downloads the AI models, ~2.3 GB):
+#   docker compose up -d
+# Then open http://localhost:8080. Stop with: docker compose down
+name: vaultwise
+
+services:
+  ollama:                                   # the local AI engine (no port published: only the app can reach it)
+    image: ollama/ollama:latest
+    container_name: vaultwise-ollama
+    volumes:
+      - ollama-models:/root/.ollama
+    environment:
+      OLLAMA_MAX_LOADED_MODELS: "2"
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  models:                                   # one-off: downloads the models the first time, then exits
+    image: ollama/ollama:latest
+    container_name: vaultwise-models
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c", "ollama pull llama3.2:3b && ollama pull nomic-embed-text"]
+    restart: "no"
+
+  app:                                      # the Vaultwise web app
+    build: .
+    image: vaultwise-app:latest
+    container_name: vaultwise-app
+    depends_on:
+      models:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8080:8000"               # reachable from this computer only
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      VAULTWISE_SUMMARY_MODEL: llama3.2:3b
+      # VAULTWISE_ADMIN_KEY: change-me      # uncomment to require a password for uploads and deletions
+    volumes:
+      - vaultwise-data:/data                # your documents, index and logs (stays inside Docker)
+    restart: unless-stopped
+
+volumes:
+  ollama-models:
+  vaultwise-data:

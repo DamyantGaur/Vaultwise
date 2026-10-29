@@ -13,7 +13,7 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config.yaml"
-LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "ollama"}  # "ollama" = the model container in docker-compose.yml
 
 
 class PrivacyError(RuntimeError):
@@ -37,6 +37,8 @@ def load_config(path: str | os.PathLike | None = None, overrides: dict[str, Any]
             continue
         cfg[key] = _resolve(str(cfg[key]).replace("{private_dir}", cfg["private_dir"]))
     cfg.setdefault("privacy", {"allow_remote_llm": False, "log_private_text": False})
+    if os.environ.get("VAULTWISE_SUMMARY_MODEL"):  # the Docker setup summarises with the 3B model (smaller download)
+        cfg["generation"]["summary_model"] = os.environ["VAULTWISE_SUMMARY_MODEL"]
     return cfg
 
 

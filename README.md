@@ -112,8 +112,25 @@ Generated numbers are in [results/results.md](results/results.md) and every fail
 ```
 
 It checks Python and the packages, starts Ollama if needed, downloads missing models the first time, starts
-Vaultwise on `127.0.0.1:8000` and opens the browser. That one command is all it takes; nothing else needs to be
-installed or started.
+Vaultwise on `127.0.0.1:8000` and opens the browser.
+
+**With Docker, one command** (needs only Docker Desktop running):
+
+```powershell
+docker compose up -d
+```
+
+This starts three containers in a `vaultwise` project, visible in Docker Desktop:
+
+| Container | What it does |
+|---|---|
+| `vaultwise-app` | the web app, at http://localhost:8080 (reachable from this computer only) |
+| `vaultwise-ollama` | the local AI engine; no port is published, so only the app can reach it |
+| `vaultwise-models` | downloads the AI models the first time (~2.3 GB), then exits |
+
+Documents, the index and logs are kept in the Docker volume `vaultwise-data`, inside Docker's own storage and
+never in the project folder. Stop with `docker compose down`; add `-v` to also delete the stored documents and
+models. In Docker, summaries use the 3B model to keep the download small.
 
 **Manual / macOS / Linux.** Prerequisites: Python 3.10+, [Ollama](https://ollama.com/download).
 
@@ -147,6 +164,8 @@ Every push and pull request runs `.github/workflows/ci-cd.yml` on GitHub:
    precision or the margin over the no-retrieval baseline drop below set thresholds.
 2. **Start-up check:** installs the app the way a user does, starts the server, and checks that the API and
    dashboard respond.
+3. **Docker check:** validates `docker-compose.yml`, builds the app image, runs the container, and checks that it
+   responds.
 
 A failing stage marks the commit red on GitHub, so a broken or lower-quality change is caught before it's used.
 Vaultwise is deployed by running it locally (`run.bat`), which keeps confidential documents on the user's computer.
@@ -299,6 +318,7 @@ results/                    raw runs, tables, failure lists, per-question CSV, f
 docs/REPORT.md              project report
 docs/COMPETITORS.md         competitor analysis with sources
 RUN_GUIDE.md                how to start Vaultwise from the terminal
-.github/workflows/ci-cd.yml the CI pipeline: lint + tests + quality gate -> app start-up check
+.github/workflows/ci-cd.yml the CI pipeline: lint + tests + quality gate -> start-up check + Docker check
+Dockerfile, docker-compose.yml  the Docker setup: app + AI engine + model download, one command
 eval/quality_gate.py        the AI quality thresholds the pipeline enforces
 ```
