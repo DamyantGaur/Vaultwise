@@ -1,6 +1,6 @@
 # Vaultwise CI
-#  1. test   - lint, unit/API tests, and the AI quality gate (re-scores stored evaluation outputs)
-#  2. build  - builds the Docker image, starts the container and checks that it serves the app
+#  1. test     - lint, unit/API tests, and the AI quality gate (re-scores stored evaluation outputs)
+#  2. startup  - installs the app the way a user does and checks that the server starts and responds
 # Runs on every push and pull request. Any failure marks the commit red, so a broken or lower-quality
 # change is caught before it is merged.
 name: CI
@@ -42,27 +42,32 @@ jobs:
       - name: AI quality gate
         run: python eval/quality_gate.py
 
-  build:
-    name: Docker build and start-up check
+  startup:
+    name: App start-up check
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Build the image
-        run: docker build -t vaultwise:ci .
-      - name: Start the container
-        run: docker run -d --name vaultwise -p 8000:8000 vaultwise:ci
-      - name: Check that the app and its API respond
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Start the server
+        run: |
+          python -m uvicorn vaultwise.api:app --app-dir src --host 127.0.0.1 --port 8000 > server.log 2>&1 &
+      - name: Check that the API and dashboard respond
         run: |
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:8000/health > health.json; then break; fi
-            sleep 2
+            if curl -sf http://127.0.0.1:8000/health > health.json; then break; fi
+            sleep 1
           done
           cat health.json
           grep -q '"status":"ok"' health.json
-          curl -sf http://localhost:8000/ | grep -q "<title>Vaultwise</title>"
-          echo "Container serves /health and the dashboard"
-      - name: Container logs
+          curl -sf http://127.0.0.1:8000/ | grep -q "<title>Vaultwise</title>"
+          echo "Server starts and serves /health and the dashboard"
+      - name: Server log
         if: always()
-        run: docker logs vaultwise 2>&1 | tail -n 40 || true
+        run: tail -n 40 server.log || true

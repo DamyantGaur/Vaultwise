@@ -1,7 +1,7 @@
 # How to run Vaultwise from the terminal
 
-Vaultwise runs entirely on your computer. You do **not** need Docker, a GPU or an internet connection
-(internet is needed only once, to download the AI models).
+Vaultwise runs entirely on your computer with **one command**. It needs only Python and Ollama: no Docker,
+no GPU, and no internet connection (internet is needed only once, to download the AI models).
 
 ---
 
@@ -73,22 +73,6 @@ Then open http://127.0.0.1:8000 in your browser.
 
 ---
 
-## Do I need Docker?
-
-**No.** Use `run.bat`. Docker is not needed, and Docker Desktop does not have to be open.
-
-The `Dockerfile` and `docker-compose.yml` are included only for deploying Vaultwise on a company server.
-If you ever use them:
-
-- Docker Desktop must be running first.
-- The Docker version uses its **own** copy of Ollama, so the models are downloaded again inside Docker
-  (about 7 GB), and on Windows it runs on the CPU, which is slower.
-- Start it with `docker compose up -d`, then download the models:
-  `docker compose exec ollama ollama pull llama3.2:3b` (and `nomic-embed-text`, `llama3.1:8b`).
-
-For your own use and for the project demo, `run.bat` is simpler and faster.
-
----
 
 ## Running the tests and the evaluations (for the project report)
 

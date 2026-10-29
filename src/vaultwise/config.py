@@ -13,7 +13,7 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config.yaml"
-LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "ollama"}  # "ollama" = the private docker-compose service
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 
 class PrivacyError(RuntimeError):
